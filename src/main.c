@@ -4,12 +4,12 @@
 #include <time.h>
 #include <string.h>
 
-#define GRID_SIZE 500    // Размер сетки (вы можете увеличить для более крупных клеток)
-#define CELL_SIZE 3      // Размер каждой клетки
+#define GRID_SIZE 500    
+#define CELL_SIZE 3      
 #define SCREEN_WIDTH 800
 #define SCREEN_HEIGHT 600
 
-// Определим структуру для игры
+
 typedef struct {
     bool* grid;
     int width;
@@ -22,30 +22,31 @@ void DrawGameOfLife(GameOfLife* game);
 int CountNeighbors(GameOfLife* game, int x, int y);
 void SetCell(GameOfLife* game, int x, int y, bool state);
 void DrawStats(int iteration, int population);
-void AddCellWithMouse(GameOfLife* game, Vector2 mousePosition);
+void AddBrushWithMouse(GameOfLife* game, Vector2 mousePosition, int brushSize);
 
 int main(void) {
-    // Инициализация
+    
     InitWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "Game of Life");
-    SetTargetFPS(60); // Ограничение кадров в секунду
+    SetTargetFPS(60); 
 
-    // Инициализация состояния игры
+    
     GameOfLife game;
     InitGameOfLife(&game, GRID_SIZE, GRID_SIZE);
 
     int iteration = 0;
     int population = 0;
-    int speed = 10;  // Начальная скорость обновлений (итераций в секунду)
-    bool isPaused = false;  // Статус паузы
+    int speed = 10;  
+    bool isPaused = false;  
 
-    char speedText[10] = "10"; // Начальное значение для скорости
-    bool isSettingSpeed = false;  // Флаг для ввода новой скорости
+    char speedText[10] = "10"; 
+    bool isSettingSpeed = false;  
 
-    // Время для вычисления интервала обновлений
+    
     float timeAccumulator = 0.0f;
-    float updateInterval = 1.0f / speed;  // Интервал обновления в секундах
+    float updateInterval = 1.0f / speed;  
 
-    // Рандомная начальная популяция
+    int brushSize = 1;
+    
     srand(time(NULL));
     for (int y = 0; y < game.height; y++) {
         for (int x = 0; x < game.width; x++) {
@@ -56,31 +57,37 @@ int main(void) {
         }
     }
 
-    // Главный игровой цикл
+    
     while (!WindowShouldClose()) {
-        // Получаем время прошедшее с последнего кадра
+        
         float deltaTime = GetFrameTime();
         timeAccumulator += deltaTime;
 
-        // Обработка ввода для скорости и паузы
+        
         if (IsKeyDown(KEY_UP)) {
             speed = (speed < 60) ? speed + 1 : 60;
             updateInterval = 1.0f / speed;
         }
         if (IsKeyDown(KEY_DOWN)) {
-            speed = (speed > 1) ? speed - 1 : 1;  // Уменьшить скорость, не ниже 1
+            speed = (speed > 1) ? speed - 1 : 1;  
             updateInterval = 1.0f / speed;
         }
         if (IsKeyPressed(KEY_SPACE)) {
-            isPaused = !isPaused;  // Переключение состояния паузы
+            isPaused = !isPaused;  
         }
         if (IsKeyPressed(KEY_R)) {
-            speed = 1;  // Увеличить скорость
+            speed = 1;  
             updateInterval = 1.0f / speed;
         }
         if (IsKeyPressed(KEY_M)) {
-            speed = 60;  // Увеличить скорость
+            speed = 60;  
             updateInterval = 1.0f / speed;
+        }
+        if (GetMouseWheelMove() > 0) {
+            brushSize = (brushSize < 50) ? brushSize + 1 : 50;  
+        }
+        if (GetMouseWheelMove() < 0) {
+            brushSize = (brushSize > 1) ? brushSize - 1 : 1;  
         }
 
 
@@ -88,14 +95,14 @@ int main(void) {
             if (timeAccumulator >= updateInterval) {
                 UpdateGameOfLife(&game);
                 timeAccumulator = 0.0f;
-                iteration++;  // Increment the iteration count
+                iteration++;  
             }
         }
 
 
         population = 0;
 
-        // Подсчет живых клеток
+        
         for (int y = 0; y < game.height; y++) {
             for (int x = 0; x < game.width; x++) {
                 if (game.grid[y * game.width + x]) {
@@ -104,21 +111,21 @@ int main(void) {
             }
         }
 
-        // Обработка клика мышью для добавления клеток
+        
         Vector2 mousePosition = GetMousePosition();
-        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            AddCellWithMouse(&game, mousePosition);
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {  
+            AddBrushWithMouse(&game, mousePosition, brushSize);
         }
 
-        // Отрисовка
+        
         BeginDrawing();
-        ClearBackground(BLACK);  // Ensure the screen is cleared at the beginning of each frame.
+        ClearBackground(BLACK);  
 
-        DrawGameOfLife(&game);  // Draw the game grid
-        DrawStats(iteration, population);  // Draw the statistics
+        DrawGameOfLife(&game);  
+        DrawStats(iteration, population);  
 
         if (isPaused) {
-            DrawText("PAUSED", 0, 0, 30, RED);  // Display PAUSED text
+            DrawText("PAUSED", 0, 0, 30, RED);  
         }
 
         EndDrawing();
@@ -126,9 +133,9 @@ int main(void) {
 
     }
 
-    // Деинициализация
+    
     free(game.grid);
-    CloseWindow(); // Закрыть окно и контекст OpenGL
+    CloseWindow(); 
 
     return 0;
 }
@@ -136,7 +143,7 @@ int main(void) {
 void InitGameOfLife(GameOfLife* game, int width, int height) {
     game->width = width;
     game->height = height;
-    game->grid = (bool*)calloc(width * height, sizeof(bool));  // Динамическое выделение памяти
+    game->grid = (bool*)calloc(width * height, sizeof(bool));  
 }
 
 void UpdateGameOfLife(GameOfLife* game) {
@@ -147,16 +154,16 @@ void UpdateGameOfLife(GameOfLife* game) {
             int neighbors = CountNeighbors(game, x, y);
             bool currentState = game->grid[y * game->width + x];
 
-            // Правила игры
+            
             if (currentState && (neighbors == 2 || neighbors == 3)) {
-                newGrid[y * game->width + x] = true; // Клетка остается живой
+                newGrid[y * game->width + x] = true; 
             } else if (!currentState && neighbors == 3) {
-                newGrid[y * game->width + x] = true; // Клетка становится живой
+                newGrid[y * game->width + x] = true; 
             }
         }
     }
 
-    // Обновление состояния сетки
+    
     free(game->grid);
     game->grid = newGrid;
 }
@@ -201,11 +208,16 @@ void DrawStats(int iteration, int population) {
     DrawText(stats, 10, SCREEN_HEIGHT / 2 - 50, 20, RAYWHITE);
 }
 
-void AddCellWithMouse(GameOfLife* game, Vector2 mousePosition) {
-    // Конвертируем координаты мыши в координаты клетки
-    int x = (int)(mousePosition.x / CELL_SIZE);
-    int y = (int)(mousePosition.y / CELL_SIZE);
+void AddBrushWithMouse(GameOfLife* game, Vector2 mousePosition, int brushSize) {
+    int xCenter = (int)(mousePosition.x / CELL_SIZE);
+    int yCenter = (int)(mousePosition.y / CELL_SIZE);
 
-    // Добавляем клетку
-    SetCell(game, x, y, true);
+    for (int y = -brushSize; y <= brushSize; y++) {
+        for (int x = -brushSize; x <= brushSize; x++) {
+            int distance = x * x + y * y;
+            if (distance <= brushSize * brushSize) {  
+                SetCell(game, xCenter + x, yCenter + y, true);
+            }
+        }
+    }
 }
