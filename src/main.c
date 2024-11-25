@@ -35,7 +35,7 @@ int main(void) {
 
     int iteration = 0;
     int population = 0;
-    int speed = 10;  
+    int speed = 60;  
     bool isPaused = false;  
 
     char speedText[10] = "10"; 
@@ -45,7 +45,7 @@ int main(void) {
     float timeAccumulator = 0.0f;
     float updateInterval = 1.0f / speed;  
 
-    int brushSize = 1;
+    int brushSize = 0;
     
     srand(time(NULL));
     for (int y = 0; y < game.height; y++) {
@@ -87,7 +87,7 @@ int main(void) {
             brushSize = (brushSize < 50) ? brushSize + 1 : 50;  
         }
         if (GetMouseWheelMove() < 0) {
-            brushSize = (brushSize > 1) ? brushSize - 1 : 1;  
+            brushSize = (brushSize > 0) ? brushSize - 1 : 0;  
         }
 
 
@@ -125,7 +125,7 @@ int main(void) {
         DrawStats(iteration, population);  
 
         if (isPaused) {
-            DrawText("PAUSED", 0, 0, 30, RED);  
+            DrawText("PAUSED", 10, 10, 30, YELLOW);  
         }
 
         EndDrawing();
@@ -205,7 +205,7 @@ void SetCell(GameOfLife* game, int x, int y, bool state) {
 void DrawStats(int iteration, int population) {
     char stats[128];
     snprintf(stats, sizeof(stats), "Iteration: %d | Population: %d", iteration, population);
-    DrawText(stats, 10, SCREEN_HEIGHT / 2 - 50, 20, RAYWHITE);
+    DrawText(stats, 10, SCREEN_HEIGHT-30, 20, YELLOW);
 }
 
 void AddBrushWithMouse(GameOfLife* game, Vector2 mousePosition, int brushSize) {
@@ -214,9 +214,14 @@ void AddBrushWithMouse(GameOfLife* game, Vector2 mousePosition, int brushSize) {
 
     for (int y = -brushSize; y <= brushSize; y++) {
         for (int x = -brushSize; x <= brushSize; x++) {
-            int distance = x * x + y * y;
-            if (distance <= brushSize * brushSize) {  
-                SetCell(game, xCenter + x, yCenter + y, true);
+            if (brushSize == 0) {  
+                SetCell(game, xCenter, yCenter, true);  
+            } else {  
+                for (int y = -brushSize; y <= brushSize; y++) {  
+                    for (int x = -brushSize; x <= brushSize; x++) {  
+                        SetCell(game, xCenter + x, yCenter + y, true);  
+                    }  
+                }  
             }
         }
     }
